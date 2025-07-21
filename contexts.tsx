@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect, useCallback, createContext, useContext } from 'react';
-import { supabase, Database } from './services';
+import { supabase } from './services';
 import { TRANSLATIONS } from './constants';
-import { LanguageCode, Translations, LanguageContextType, Theme, ThemeContextType, AuthContextType, User } from './types';
+import { Database, LanguageCode, Translations, LanguageContextType, Theme, ThemeContextType, AuthContextType, User } from './types';
 import { AuthChangeEvent, Session, User as SupabaseUser } from '@supabase/supabase-js';
 
 // --- Language Context ---
@@ -100,14 +100,14 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
                     .single();
                 
                 if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
-                     console.error('Error fetching profile:', error);
+                     console.warn('Could not fetch user profile. This is normal for new users or if RLS is enabled. Falling back to auth data.', error.message);
                 }
 
                 setUser({
                     id: supabaseUser.id,
                     email: supabaseUser.email || null,
-                    displayName: profile?.display_name || supabaseUser.email,
-                    photoURL: profile?.photo_url || supabaseUser.user_metadata.avatar_url,
+                    displayName: profile?.display_name || supabaseUser.user_metadata?.full_name || supabaseUser.email,
+                    photoURL: profile?.photo_url || supabaseUser.user_metadata?.avatar_url,
                 });
             } else {
                 setUser(null);
@@ -168,29 +168,30 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     const updateUser = async (newDetails: Partial<User>) => {
         if (!user) return;
 
-        const updatePayload: Database['public']['Tables']['profiles']['Update'] = {};
+        const upsertPayload: { id: string, display_name?: string | null, photo_url?: string | null } = {
+            id: user.id,
+        };
 
         if (typeof newDetails.displayName !== 'undefined') {
-            updatePayload.display_name = newDetails.displayName;
+            upsertPayload.display_name = newDetails.displayName;
         }
 
         if (typeof newDetails.photoURL !== 'undefined') {
-            updatePayload.photo_url = newDetails.photoURL;
+            upsertPayload.photo_url = newDetails.photoURL;
         }
 
-        if (Object.keys(updatePayload).length === 0) {
-            return;
+        if (Object.keys(upsertPayload).length <= 1) {
+            return; // Nothing to update
         }
 
         const { data, error } = await supabase
             .from('profiles')
-            .update(updatePayload)
-            .eq('id', user.id)
+            .upsert(upsertPayload)
             .select()
             .single();
 
         if (error) {
-            console.error('Error updating profile:', error);
+            console.error('Error updating profile:', JSON.stringify(error, null, 2));
             throw error;
         }
 

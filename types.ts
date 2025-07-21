@@ -1,6 +1,107 @@
 
 import { GoogleGenAI } from '@google/genai';
 
+// --- Database Schema Definition ---
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export interface Database {
+  public: {
+    Tables: {
+      plans: {
+        Row: {
+            id: string;
+            created_at?: string;
+            user_id?: string;
+            campaignName: string;
+            objective: string;
+            targetAudience: string;
+            location: string;
+            totalInvestment: number;
+            logoUrl: string;
+            customFormats: Json;
+            utmLinks: Json;
+            months: Json;
+            creatives: Json;
+            adGroups: Json;
+            aiPrompt?: string | null;
+            aiImagePrompt?: string | null;
+        },
+        Insert: {
+            id: string;
+            created_at?: string;
+            user_id?: string;
+            campaignName: string;
+            objective: string;
+            targetAudience: string;
+            location: string;
+            totalInvestment: number;
+            logoUrl: string;
+            customFormats: Json;
+            utmLinks: Json;
+            months: Json;
+            creatives: Json;
+            adGroups: Json;
+            aiPrompt?: string | null;
+            aiImagePrompt?: string | null;
+        },
+        Update: {
+            id?: string;
+            created_at?: string;
+            user_id?: string;
+            campaignName?: string;
+            objective?: string;
+            targetAudience?: string;
+            location?: string;
+            totalInvestment?: number;
+            logoUrl?: string;
+            customFormats?: Json;
+            utmLinks?: Json;
+            months?: Json;
+            creatives?: Json;
+            adGroups?: Json;
+            aiPrompt?: string | null;
+            aiImagePrompt?: string | null;
+        }
+      },
+      profiles: {
+         Row: {
+            id: string,
+            display_name: string | null,
+            photo_url: string | null
+        },
+        Insert: {
+            id: string,
+            display_name?: string | null,
+            photo_url?: string | null
+        },
+        Update: {
+            display_name?: string | null,
+            photo_url?: string | null
+        }
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+
 // DATA MODELS
 export interface Campaign {
     id: string;
@@ -59,22 +160,14 @@ export interface AdGroup {
     keywords: KeywordSuggestion[];
 }
 
-export interface PlanData {
-    id:string;
-    user_id?: string; // Foreign key to auth.users
-    campaignName: string;
-    objective: string;
-    targetAudience: string;
-    location: string;
-    totalInvestment: number;
-    logoUrl: string;
+type PlanRow = Database['public']['tables']['plans']['Row'];
+
+export interface PlanData extends Omit<PlanRow, 'customFormats' | 'utmLinks' | 'months' | 'creatives' | 'adGroups'> {
     customFormats: string[];
     utmLinks: UTMLink[];
     months: Record<string, Campaign[]>;
     creatives: Record<string, CreativeTextData[]>;
     adGroups: AdGroup[];
-    aiPrompt?: string;
-    aiImagePrompt?: string;
 }
 
 export interface UTMLink {

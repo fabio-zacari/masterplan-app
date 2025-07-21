@@ -623,7 +623,7 @@ export const LoginPage: React.FC = () => {
             <Card className="max-w-md w-full shadow-2xl animate-modalFadeIn">
                 <img src={LOGO_DARK} alt="MasterPlan Logo" className="mx-auto h-12 mb-2" />
                 <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-gray-100">{isSignUp ? t('create_account') : t('Acesse sua conta')}</h1>
-                <p className="mt-2 mb-6 text-center text-gray-600 dark:text-gray-400">{t('Ferramenta de IA para Marketing.')}</p>
+                <p className="mt-2 mb-6 text-center text-gray-600 dark:text-gray-400">{t('Plano de Mídia com Inteligência.')}</p>
                 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {isSignUp && (
